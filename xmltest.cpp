@@ -2488,6 +2488,61 @@ int main( int argc, const char ** argv )
     	doc.PrintError();
     }
 
+	{
+		XMLDocument* doc = new XMLDocument;
+		doc->InsertEndChild(doc->NewElement("root"));
+		XMLElement* parent = doc->FirstChildElement();
+		for (int i = 0; i < 1000000; i++) {
+			parent = parent->InsertNewChildElement("foo");
+		}
+		delete doc; //this should not crash with a stack overflow (unbounded recursion in destructor?)
+	}
+
+	{
+		XMLDocument* doc = new XMLDocument;
+		doc->InsertEndChild(doc->NewElement("root"));
+		XMLElement* parent = doc->FirstChildElement();
+		for (int i = 0; i < 1000000; i++) {
+			parent = parent->InsertNewChildElement("foo");
+		}
+		XMLDocument* doc2 = new XMLDocument;
+
+		doc->DeepCopy(doc2); //this should not crash with a stack overflow (unbounded recursion?)
+
+		delete doc;
+		delete doc2;
+	}
+
+	{
+		XMLDocument* doc = new XMLDocument;
+		doc->InsertEndChild(doc->NewElement("root"));
+		XMLElement* parent = doc->FirstChildElement();
+		for (int i = 0; i < 1000000; i++) {
+			parent = parent->InsertNewChildElement("foo");
+		}
+		XMLDocument* doc2 = new XMLDocument;
+
+		XMLElement* c = doc->FirstChildElement();
+		XMLNode* n = c->DeepClone(doc2); //this should not crash with a stack overflow (unbounded recursion?)
+
+		delete doc;
+		delete doc2;
+	}
+
+	{
+		XMLDocument* doc = new XMLDocument;
+		doc->InsertEndChild(doc->NewElement("root"));
+		XMLElement* parent = doc->FirstChildElement();
+		for (int i = 0; i < 1000000; i++) {
+			parent = parent->InsertNewChildElement("foo");
+		}
+
+		XMLVisitor v;
+		doc->Accept(&v); //this should not crash with a stack overflow (unbounded recursion?)
+
+		delete doc;
+	}
+
     // ----------- Performance tracking --------------
 	{
 #if defined( _MSC_VER )
